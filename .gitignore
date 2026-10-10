@@ -1,0 +1,37 @@
+node_modules/
+dist/
+*.local
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store
+# Android yerel ayarları, derleme çıktıları ve imzalama bilgileri
+android/local.properties
+android/.gradle/
+android/.idea/
+android/**/build/
+*.jks
+*.keystore
+android/key.properties
+supabase/.temp/
+
+# Yerel raporlar ve doğrulama çıktıları
+report-qa/
+Akilli_Atik_Haftalik_Rapor_*.docx
+supabase-login-code.local
+
+# IDE ve cache dosyaları
+.idea/
+.vscode/
+.cache/
+coverage/
+*.apk
+*.aab
+*.pem
+*.p12
+
+# Örnek ortam dosyaları gerçek secret içermemelidir
+!.env.example
+!supabase/functions/.env.example

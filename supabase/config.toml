@@ -1,0 +1,7 @@
+project_id = "akilli-atik"
+
+[functions.analyze-waste]
+# No Supabase Authentication in Phase 3. Handler explicitly checks the public apikey.
+# Public keys are extractable: this check is not user authentication or abuse prevention.
+verify_jwt = false
+entrypoint = "./functions/analyze-waste/index.ts"
