@@ -29,6 +29,7 @@ export interface AnalysisAuthPort {
   ): { data: { subscription: { unsubscribe(): void } } };
 }
 interface AnalysisRequestDependencies {
+  accessMode?: "test" | "authenticated";
   auth: AnalysisAuthPort | null;
   configuration: { url: string; key: string } | null;
   online: boolean;
@@ -50,7 +51,8 @@ export async function requestAuthenticatedAnalysis(
   if (!config) throw new AnalysisError("NOT_CONFIGURED");
   if (!dependencies.auth || !expectedUserId)
     throw new AnalysisError("USER_UNAUTHORIZED");
-  if (!testToken.trim()) throw new AnalysisError("TEST_ACCESS_REQUIRED");
+  if (dependencies.accessMode !== "authenticated" && !testToken.trim())
+    throw new AnalysisError("TEST_ACCESS_REQUIRED");
   if (!UUID_PATTERN.test(clientRequestId)) throw new AnalysisError("INVALID_REQUEST_ID");
   if (photo.type !== "image/jpeg" || !photo.size || photo.size > MAX_ANALYSIS_BYTES)
     throw new AnalysisError("INVALID_PHOTO");
@@ -109,7 +111,7 @@ export async function requestAuthenticatedAnalysis(
           "Content-Type": "image/jpeg",
           apikey: config.key,
           Authorization: `Bearer ${session.access_token}`,
-          "x-analysis-test-token": testToken.trim(),
+          ...(dependencies.accessMode !== "authenticated" ? { "x-analysis-test-token": testToken.trim() } : {}),
           "x-client-request-id": clientRequestId,
         },
         body: photo,

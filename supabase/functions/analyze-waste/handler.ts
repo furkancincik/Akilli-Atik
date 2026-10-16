@@ -8,9 +8,11 @@ import { analyzeWithGemini, DEFAULT_MODEL } from "./gemini.ts";
 import { requireTestAccess } from "./testAccess.ts";
 import { verifyAnalysisUser, type VerifiedAnalysisUser } from "./authentication.ts";
 import { createAnalysisStore, type AnalysisStore } from "./storage.ts";
-import { createAnalysisDeadline, type AnalysisDeadline } from "./deadline.ts";
+import { createAnalysisDeadline, createUserAnalysisDeadline, type AnalysisDeadline } from "./deadline.ts";
+import { createAnalysisQuota, type AnalysisQuota } from "./quota.ts";
 
 export interface ServerConfig {
+  accessMode?: "test" | "authenticated";
   enabled: boolean;
   apiKey: string;
   publicKeys: string[];
@@ -23,6 +25,7 @@ export interface ServerConfig {
 }
 
 export interface HandlerDependencies {
+  quota?: AnalysisQuota;
   verifyUser?: (request: Request) => Promise<Readonly<VerifiedAnalysisUser>>;
   store?: AnalysisStore;
   analyze?: typeof analyzeWithGemini;
@@ -80,6 +83,8 @@ function statusFor(error: AnalysisError): number {
     case "INVALID_PHOTO":
     case "INVALID_REQUEST_ID":
       return 400;
+    case "REQUEST_ALREADY_USED":
+      return 409;
     case "RATE_LIMITED":
     case "QUOTA_EXCEEDED":
       return 429;
@@ -90,6 +95,7 @@ function statusFor(error: AnalysisError): number {
     case "SERVICE_DISABLED":
     case "MISSING_API_KEY":
     case "AUTH_UNAVAILABLE":
+    case "QUOTA_UNAVAILABLE":
       return 503;
     default:
       return 502;
@@ -135,6 +141,7 @@ export function createHandler(
       });
     let release: (() => void) | undefined;
     let deadline: AnalysisDeadline | undefined;
+    let reservation: { userId: string; requestId: string; leaseId: string } | undefined;
     try {
       if (origin && !config.allowedOrigins.includes(origin))
         throw new AnalysisError("ORIGIN_DENIED");
@@ -150,8 +157,9 @@ export function createHandler(
       )
         throw new AnalysisError("UNAUTHORIZED");
       if (!config.enabled) throw new AnalysisError("SERVICE_DISABLED");
-      deadline = createAnalysisDeadline(config.testExpiresAt, now);
-      await requireTestAccess(
+      const normalMode = config.accessMode === "authenticated";
+      deadline = normalMode ? createUserAnalysisDeadline(now) : createAnalysisDeadline(config.testExpiresAt, now);
+      if (!normalMode) await requireTestAccess(
         request.headers.get("x-analysis-test-token"),
         config.testToken,
         config.testExpiresAt,
@@ -196,6 +204,24 @@ export function createHandler(
       deadline.assertOpen();
       validateAnalysisImage(bytes);
       if (request.signal.aborted) throw new AnalysisError("CANCELLED");
+      if (normalMode) {
+        const quota = dependencies.quota ?? createAnalysisQuota({
+          supabaseUrl: config.supabaseUrl ?? "", serviceRoleKey: config.serviceRoleKey ?? "",
+        }, transport);
+        const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes.slice().buffer)))
+          .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+        const admission = await quota.reserve(user.id, requestId, digest);
+        deadline.assertOpen();
+        if (admission.status === "limited") throw new AnalysisError("RATE_LIMITED");
+        if (admission.status === "conflict") throw new AnalysisError("INVALID_REQUEST_ID");
+        if (admission.status === "duplicate") {
+          const previous = await analysisStore().find(user.id, requestId);
+          deadline.assertOpen();
+          if (!previous) throw new AnalysisError("REQUEST_ALREADY_USED");
+          return json({ result: previous.result, persistence: { status: "duplicate", id: previous.id } }, 200);
+        }
+        reservation = { userId: user.id, requestId, leaseId: admission.leaseId };
+      }
       const key = `${user.id.toLowerCase()}:${requestId.toLowerCase()}`;
       const pending = inFlight.get(key);
       if (pending) {
@@ -255,6 +281,14 @@ export function createHandler(
         statusFor(error),
       );
     } finally {
+      if (reservation) {
+        try {
+          const quota = dependencies.quota ?? createAnalysisQuota({
+            supabaseUrl: config.supabaseUrl ?? "", serviceRoleKey: config.serviceRoleKey ?? "",
+          }, transport);
+          await quota.finish(reservation.userId, reservation.requestId, reservation.leaseId);
+        } catch { /* No refund or retry. The short lease expires, durable budget stays spent. */ }
+      }
       deadline?.dispose();
       release?.();
     }

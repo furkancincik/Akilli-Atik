@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
 import { setTimeout } from "node:timers/promises";
 import { runGamificationConcurrency } from "./test-gamification-concurrency.mjs";
+import { runAnalysisQuotaConcurrency } from "./test-analysis-quota-concurrency.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const container = `akilli-atik-step2-${process.pid}-${Date.now()}`;
@@ -62,6 +63,9 @@ try {
   sql("supabase/migrations/20261016000100_gamification.sql");
   sql("supabase/tests/gamification.test.sql");
   await runGamificationConcurrency(container, database);
+  sql("supabase/migrations/20261017000100_analysis_quota.sql");
+  sql("supabase/tests/analysis_quota.test.sql");
+  await runAnalysisQuotaConcurrency(container, database);
   docker(["exec", container, "psql", "-X", "-U", "postgres", "-d", database,
     "--set", "ON_ERROR_STOP=1", "-c",
     "DO $$ BEGIN IF EXISTS (SELECT 1 FROM auth.users) OR EXISTS (SELECT 1 FROM public.waste_analyses) OR EXISTS(SELECT 1 FROM public.profiles) OR EXISTS(SELECT 1 FROM private.xp_awards) THEN RAISE EXCEPTION 'Test rollback failed'; END IF; END $$;"]);

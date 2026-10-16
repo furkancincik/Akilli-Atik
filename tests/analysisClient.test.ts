@@ -39,6 +39,7 @@ function fixture() {
     },
   };
   const dependencies = {
+    accessMode: "test" as "test" | "authenticated",
     auth: auth as AnalysisAuthPort | null,
     configuration: { url: "https://test-project.supabase.co", key: "test-public-key" } as { url: string; key: string } | null,
     online: true,
@@ -55,6 +56,17 @@ function fixture() {
     },
   };
 }
+
+test("Normal analiz istemcisi kod istemez ve test başlığı göndermez; JWT korunur", async () => {
+  const f = fixture(); f.dependencies.accessMode = "authenticated";
+  f.dependencies.transport = async (_url, init) => {
+    const headers = new Headers(init?.headers);
+    assert.equal(headers.has("x-analysis-test-token"),false);
+    assert.equal(headers.get("Authorization"),"Bearer unit-test-user-jwt-never-real");
+    return result();
+  };
+  assert.equal((await f.send(jpeg(),new AbortController().signal,"")).persistence.status,"saved");
+});
 
 test("Analiz istemcisi SDK JWT ve UUID başlıklarını gönderir; kullanıcı kimliği gövdeye yazılmaz", async () => {
   const f = fixture(), photo = jpeg(); let calls = 0;

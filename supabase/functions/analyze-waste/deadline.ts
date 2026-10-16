@@ -8,6 +8,11 @@ export interface AnalysisDeadline {
   dispose(): void;
 }
 
+/** Normal requests have a bounded execution; pilot's absolute cutoff stays separate. */
+export function createUserAnalysisDeadline(now: () => number = Date.now): AnalysisDeadline {
+  return createAnalysisDeadline(new Date(now() + 90_000).toISOString(), now);
+}
+
 /** Absolute server-side cutoff; it never changes the remote enable secret. */
 export function createAnalysisDeadline(
   expiresAt: string | undefined,

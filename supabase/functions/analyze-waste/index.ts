@@ -27,6 +27,8 @@ function publicKeys(): string[] {
 
 Deno.serve(
   createHandler({
+    // Unknown/missing values retain the controlled pilot; never enable implicitly.
+    accessMode: Deno.env.get("ANALYSIS_ACCESS_MODE") === "authenticated" ? "authenticated" : "test",
     enabled: Deno.env.get("ANALYSIS_ENABLED") === "true",
     testToken: Deno.env.get("ANALYSIS_TEST_TOKEN"),
     testExpiresAt: Deno.env.get("ANALYSIS_TEST_EXPIRES_AT"),

@@ -33,6 +33,8 @@ export interface AnalysisOutcome {
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const ERROR_MESSAGES = {
+  QUOTA_UNAVAILABLE: "Güvenli kullanım sınırı doğrulanamadı. Analiz başlatılmadı; daha sonra tekrar dene.",
+  REQUEST_ALREADY_USED: "Bu istek daha önce işlendi veya işleniyor. Geçmişini kontrol et; otomatik olarak yeni analiz başlatılmadı.",
   TEST_ACCESS_REQUIRED:
     "Canlı test erişim kodu eksik, geçersiz veya süresi dolmuş. Geçerli test kodunu girip yeniden dene.",
   NOT_CONFIGURED:

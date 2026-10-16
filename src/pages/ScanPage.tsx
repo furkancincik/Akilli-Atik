@@ -5,6 +5,7 @@ import type { PhotoCapture } from "../hooks/usePhotoCapture";
 import type { PhotoSource } from "../services/photos";
 import { useWasteAnalysis } from "../hooks/useWasteAnalysis";
 import { AnalysisResult } from "../components/AnalysisResult";
+import { normalAnalysisAccess } from "../services/analysisAccess";
 
 export function ScanPage({ capture }: { capture: PhotoCapture }) {
   const fileInput = useRef<HTMLInputElement>(null);
@@ -106,7 +107,7 @@ export function ScanPage({ capture }: { capture: PhotoCapture }) {
           çalışılır; fotoğrafın veritabanında saklanmaz.
         </p>
         <div className="analysis-actions">
-          <label className="test-access-label">
+          {!normalAnalysisAccess && <label className="test-access-label">
             Canlı test erişim kodu
             <input
               type="password"
@@ -118,10 +119,11 @@ export function ScanPage({ capture }: { capture: PhotoCapture }) {
               disabled={busy}
               onChange={(event) => setTestToken(event.target.value)}
             />
-          </label>
+          </label>}
           <p className="photo-help">
-            Analiz yalnız onaylı süreli testlerde açılır. Kod yalnız bu ekranın
-            belleğinde tutulur.
+            {normalAnalysisAccess
+              ? "Analizler güvenli kullanım sınırlarına tabidir. XP için günlük üç analiz sınırı ayrıca uygulanır."
+              : "Analiz yalnız onaylı süreli testlerde açılır. Kod yalnız bu ekranın belleğinde tutulur."}
           </p>
           <button
             className="button primary"
@@ -148,7 +150,9 @@ export function ScanPage({ capture }: { capture: PhotoCapture }) {
                     ? "Atık analizi tamamlandı ve hesabına kaydedildi."
                     : analysis.persistence?.status === "duplicate"
                       ? "Bu fotoğrafın analizi daha önce hesabına kaydedilmiş."
-                      : "Atık analizi tamamlandı ancak hesabına kaydedilemedi. Sonucunu aşağıda görebilirsin. Aynı fotoğrafla yeniden deneyebilirsin."
+                      : normalAnalysisAccess
+                        ? "Atık analizi tamamlandı ancak hesabına kaydedilemedi. Sonucunu aşağıda görebilirsin. Aynı istek ek analiz başlatmaz; geçmişini kontrol et."
+                        : "Atık analizi tamamlandı ancak hesabına kaydedilemedi. Sonucunu aşağıda görebilirsin. Aynı fotoğrafla yeniden deneyebilirsin."
                   : "Atık tespit edilemedi."
                 : null}
           </p>
