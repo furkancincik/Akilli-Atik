@@ -81,10 +81,21 @@ export async function requestAuthenticatedAnalysis(
   };
   const readCurrentSession = async () => {
     let response: Awaited<ReturnType<AnalysisAuthPort["getSession"]>>;
+    let removeAbortListener = () => {};
     try {
-      response = await auth.getSession();
+      // The SDK may wait on refresh/network/another auth lock. Cancellation must
+      // release our request and subscription without waiting for that operation.
+      response = await new Promise<Awaited<ReturnType<AnalysisAuthPort["getSession"]>>>((resolve, reject) => {
+        const stop = () => reject(new AnalysisError("CANCELLED"));
+        removeAbortListener = () => controller.signal.removeEventListener("abort", stop);
+        controller.signal.addEventListener("abort", stop, { once: true });
+        if (controller.signal.aborted) { stop(); return; }
+        Promise.resolve().then(() => { assertActive(); return auth.getSession(); }).then(resolve, reject);
+      });
     } catch {
       throw new AnalysisError("USER_UNAUTHORIZED");
+    } finally {
+      removeAbortListener();
     }
     assertActive();
     const { data, error } = response;

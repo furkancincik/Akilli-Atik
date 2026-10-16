@@ -2,11 +2,11 @@
 
 Akıllı Atık, atık fotoğraflarından Türkçe ayrıştırma önerileri sunan bir üniversite sosyal sorumluluk projesidir. React arayüzü Capacitor ile Android uygulamasına paketlenir; görüntü analizi güvenli Supabase Edge Function üzerinden Google Gemini API ile gerçekleştirilir. Başarılı analizlerin metin sonuçları kullanıcıya özel saklanır.
 
-**Güncel durum — 17 Ekim 2026:** Test kodu gerektirmeyen kullanıcı modu yerelde hazır; kalıcı API kotası migration'ı açık onayla yalnız Akıllı Atık projesine uygulandı. RLS/RPC yetkileri ve mevcut analiz/XP/profil/hesap bütünlüğü doğrulandı; yeni kota defteri boş. Normal mod henüz deploy edilmedi; güvenli varsayılan süreli `test` modudur. `ANALYSIS_ENABLED=false`, Edge v12 ve `verify_jwt=true` korundu. Mevcut AVD'de 9 anonim WebView ve 3 doğrudan native kamera/galeri kontrolü geçti; gerçek hesapla tam Android kabulü ayrıdır. [Canlı migration sonucu](docs/analysis-quota-live-migration.md), [yerel hazırlık kaydı](docs/completion-readiness.md).
+**Güncel durum — 17 Ekim 2026:** Kalıcı kota migration’ı ve normal kullanıcı modu yalnız Akıllı Atık projesine deploy edildi: **Edge v14 / ACTIVE / verify_jwt=true / ANALYSIS_ACCESS_MODE=authenticated**. **ANALYSIS_ENABLED=false** korunuyor; analiz açılmadı. Mevcut kullanıcı/analiz/XP/profil verisi değişmedi, kota defteri boş. Güncel 333 unit, 14 yerel normal arayüz ve 9 anonim emülatör kontrolü geçti. [Kapalı deployment ve doğrulama kapsamı](docs/authenticated-closed-deployment.md).
 
 Kişisel sayfalar ihtiyaç anında yüklenir; yükleme hatasında menü/çıkış kullanılabilir kalır. Ana JavaScript parçası yaklaşık %11,3 küçültüldü. [Sayfa yükleme ve güncel APK doğrulaması](docs/route-loading-verification.md).
 
-**Güncel durum — 16 Ekim 2026, Phase 5 / STEP 2C:** Onaylı migration sonrasında yalnız izin verilen tek plastik şişe analizine atomik **200 XP** aktarıldı. Gerçek kullanıcı SDK'sı ve Profilim ekranı **Seviye 2, Geri Dönüşüm Çırağı, %66,67 ilerleme ve kalan 50 XP** ile eşleşiyor. Tek kazanım ve gerekli tek profil var; mevcut analiz/hesap korundu. Önce katılmamış hesabın görünmediği, sonra ayrı kullanıcı onayıyla **EkoGezgin / Arena katılımı açık / sıra #1** doğrulandı. Canlı listede yalnız izin verilen takma ad, XP, seviye ve sıra bilgileri var. RLS/yetkiler, Edge **v12 / verify_jwt=true** ve **ANALYSIS_ENABLED=false** korundu. Onaylanan kapsam **PASS**; ayrılma kontrolü canlı katılım kapatılmadan izole testlerle yapıldı. [Canlı backfill raporu](docs/phase5-step2c-live-backfill.md) güncel sonucu, [migration raporu](docs/phase5-step2c-live-migration.md) önceki şema uygulamasını açıklar.
+**Önceki canlı doğrulama — 16 Ekim 2026, Phase 5 / STEP 2C:** Onaylı migration sonrasında yalnız izin verilen tek plastik şişe analizine atomik **200 XP** aktarıldı. Gerçek kullanıcı SDK'sı ve Profilim ekranı **Seviye 2, Geri Dönüşüm Çırağı, %66,67 ilerleme ve kalan 50 XP** ile eşleşiyor. Tek kazanım ve gerekli tek profil var; mevcut analiz/hesap korundu. Önce katılmamış hesabın görünmediği, sonra ayrı kullanıcı onayıyla **EkoGezgin / Arena katılımı açık / sıra #1** doğrulandı. Canlı listede yalnız izin verilen takma ad, XP, seviye ve sıra bilgileri var. RLS/yetkiler, Edge **v12 / verify_jwt=true** ve **ANALYSIS_ENABLED=false** korundu. Onaylanan kapsam **PASS**; ayrılma kontrolü canlı katılım kapatılmadan izole testlerle yapıldı. [Canlı backfill raporu](docs/phase5-step2c-live-backfill.md) güncel sonucu, [migration raporu](docs/phase5-step2c-live-migration.md) önceki şema uygulamasını açıklar.
 
 ## Proje Tanıtımı
 
@@ -34,7 +34,7 @@ Projenin amacı, bir fotoğraf üzerinden anlaşılır yönlendirme sağlayarak 
 - Supabase Authentication ile kayıt, giriş, çıkış ve oturum yönetimi; korumalı kullanıcı ekranları.
 - Güvenli parola kurtarma akışı, HTTP 429 ayrımı ve aynı işlemin tekrar gönderilmesini önleyen kontroller.
 - Herkese açık karşılama ekranı, kişisel ana panel ve çıkışta kişisel içeriğin temizlenmesi.
-- Public proje anahtarı, platform ve uygulama JWT kontrolü, kesin CORS listesi, süreli test erişimi ve bellek içi istek sınırları.
+- Public proje anahtarı, platform ve uygulama JWT kontrolü, kesin CORS listesi, moda bağlı süreli pilot erişimi ve kalıcı kullanıcı/global API kotaları.
 - Başarılı analiz metninin sunucuda kullanıcı sahipliğiyle kaydı; analiz başarısı ile kayıt başarısının ayrı gösterimi.
 - Kullanıcıya özel geçmiş listesi, kayıt detayları, yenileme, 12 kayıtlık sayfalama ve onayla silme.
 - Profilim: takma ad, XP, seviye/unvan, ilerleme, doğrulanabilir rozetler, kendi sırası ve isteğe bağlı Arena katılımı; gerçek hesapta 200 XP/Seviye 2/İlk Tanıma ve analiz özeti; ayrı onayla EkoGezgin takma adı/katılım kaydı doğrulandı.
@@ -75,7 +75,7 @@ flowchart TD
     B --> C[Önizleme ve kullanıcının analiz isteği]
     C --> D[Supabase Edge Function: analyze-waste]
     D --> E[Platform JWT / public anahtar / CORS / servis ve süre kapısı]
-    E --> F[Test kodu / Auth kullanıcı doğrulaması / istek ve JPEG sınırları]
+    E --> F[Moda bağlı test kodu / Auth kullanıcı doğrulaması / kalıcı kota / JPEG sınırları]
     F --> G[Google Gemini API]
     G --> H[JSON doğrulama ve güvenlik kuralları]
     H --> J[Sunucu: doğrulanmış kullanıcı adına kalıcı kayıt]
@@ -95,7 +95,7 @@ flowchart TD
     R --> S[Profilim / isteğe bağlı Eko Arena]
 ```
 
-Şemanın analiz kolu yalnız ayrı onayla açılan kontrollü test penceresinde çalışır. Mevcut canlı serviste uygun erişim isteği **503 / `SERVICE_DISABLED`** ile sonlanır; Gemini'ye aktarılmaz. Geçmiş okuma, analiz servisi kapalıyken de kullanıcının SDK oturumu ve RLS üzerinden çalışabilir.
+Normal mod kodu deploy edilmiştir; analiz kolunun etkinleştirilmesi ayrıca onay gerektirir. Mevcut canlı serviste uygun erişim isteği **503 / `SERVICE_DISABLED`** ile sonlanır; Gemini'ye aktarılmaz. Geçmiş okuma, analiz servisi kapalıyken de kullanıcının SDK oturumu ve RLS üzerinden çalışabilir.
 
 Fotoğraf seçimi tek başına analiz başlatmaz. Analiz düğmesi küçültülmüş JPEG'i, mevcut SDK kullanıcı JWT'sini ve kullanıcı/istek tekrarını tanımlayan UUID'yi Edge Function'a iletir. Frontend Gemini veya service role anahtarını bilmez; kayıt sahibini sunucuda doğrulanan JWT belirler. Sunucu modeli çağırır, sonucu doğrular ve yalnız başarılı analizi kaydeder. İstemci yanıtı tekrar doğrular; kayıt hatası geçerli analiz sonucunu silmez. Fotoğraf veya kullanıcı değiştiğinde eski kişisel sonuç gösterilmez.
 
@@ -209,9 +209,10 @@ npm run preview
 ```dotenv
 VITE_SUPABASE_URL=https://PROJECT_REF.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_ANALYSIS_ACCESS_MODE=authenticated
 ```
 
-`VITE_` değerleri frontend paketine dahil edilir. Gemini, service_role veya `sb_secret_` anahtarları buraya eklenmez. Ayar değişince geliştirme sunucusunu yeniden başlatın; APK'yı yeniden derleyin.
+`VITE_ANALYSIS_ACCESS_MODE` yalnız arayüzü seçer; sunucuda analizi açmaz. Süreli pilot arayüzü için `test` kullanılır. `VITE_` değerleri frontend paketine dahil edilir. Gemini, service_role veya `sb_secret_` anahtarları buraya eklenmez. Ayar değişince geliştirme sunucusunu yeniden başlatın; APK'yı yeniden derleyin.
 
 ### Android Senkronizasyonu ve APK
 
@@ -254,11 +255,12 @@ Doğrulama kodlarını yalnız standart giriş ekranlarında kullanın; Git'e, r
 | --- | --- |
 | `GEMINI_API_KEY` | Yalnız sunucuda; STEP 4.3'te onaylı gerçek analiz başarılı |
 | `GEMINI_MODEL` | `gemini-3.5-flash-lite` |
+| `ANALYSIS_ACCESS_MODE` | **authenticated**; normal kullanıcı JWT ve kalıcı kota akışı |
 | `ANALYSIS_ENABLED` | **false**; ayrı onay olmadan değiştirilmez |
 | `ANALYSIS_PUBLIC_KEY` | Frontend ile eşleşen public anahtar; değeri belgelenmez |
 | `ALLOWED_ORIGINS` | `https://localhost,http://localhost,capacitor://localhost,http://localhost:5173` |
-| `ANALYSIS_TEST_TOKEN` | Yalnız onaylı kısa test için üretilir; değeri repoya veya loglara yazılmaz |
-| `ANALYSIS_TEST_EXPIRES_AT` | UTC son tarih; dış sunucu kapısı en fazla 10 dakikalık pencere kabul eder |
+| `ANALYSIS_TEST_TOKEN` | Yalnız test modundaki onaylı kısa pilot için üretilir; değeri repoya veya loglara yazılmaz |
+| `ANALYSIS_TEST_EXPIRES_AT` | Yalnız test modunda UTC son tarih; dış sunucu kapısı en fazla 10 dakikalık pencere kabul eder |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Güvenilir Edge runtime yapılandırması; service role istemciye aktarılmaz |
 
 Canlı `waste_analyses` migration'ı uygulanmıştır; mevcut veritabanına kurulum sırasında tekrar migration uygulamayın. Yeni bir ortam için önce şema ve migration geçmişi incelenir, SQL/RLS testleri çalıştırılır ve yalnız gerekli migration ayrı onayla uygulanır. İstemci bu tabloya doğrudan INSERT/UPDATE yapamaz; başarılı kaydı yalnız güvenilir Edge Function oluşturur.
@@ -301,20 +303,20 @@ Pil, elektronik, tehlikeli işareti veya riskli nesne adı için ayrıştırma m
 - Gemini anahtarı yalnız Supabase Edge secret'ıdır; frontend veya Git'e eklenmez.
 - Yerel ortam dosyaları, CLI oturumu/doğrulama dosyaları, keystore, APK, cache ve rapor çıktıları Git dışında tutulur. Boş `.env.example` şablonları paylaşılır.
 - `verify_jwt=true` platform denetimi korunur. Handler kullanıcı JWT'sini ayrıca bu projenin `/auth/v1/user` uç noktasıyla doğrular; public anahtar tek başına kullanıcı kimliği değildir. Kapalı servisin erken 503 yanıtı tek başına uygulama JWT doğrulaması kanıtı sayılmaz.
-- Analiz açıldığında 32–256 karakterlik test kodu ve UTC bitiş zamanı zorunludur. Dış sunucu kapısı **en fazla 10 dakika** kabul eder; iç test kodu denetimindeki 15 dakikalık üst sınır bu dış kapıyı uzatmaz. Eksik, geçersiz veya süresi dolmuş zaman penceresi 503; geçersiz test kodu 403 ile reddedilir.
-- Mutlak sunucu süresi erişimi kapatır ve Gemini HTTP isteğini iptal eder; remote `ANALYSIS_ENABLED` secret'ını değiştirmez. Ana süreç/bağımsız watchdog false yazımını ve 503 yanıtını ayrıca doğrular. Önceden gönderilmiş bir veritabanı işlemi geri alınmış sayılmaz.
-- Test kodu yalnız ekran belleğinde tutulur; `VITE_`, kalıcı depolama veya log'a eklenmez. Native HMAC doğrulaması kullanılır.
-- CORS tam origin listesi kullanır; joker izin yoktur. CORS kimlik doğrulama değildir; originsiz istek de erişim kontrolünden geçer.
+- Yalnız `test` modunda analiz açıldığında 32–256 karakterlik test kodu ve UTC bitiş zamanı zorunludur. Dış sunucu kapısı **en fazla 10 dakika** kabul eder; iç test kodu denetimindeki 15 dakikalık üst sınır bu dış kapıyı uzatmaz. Eksik, geçersiz veya süresi dolmuş zaman penceresi 503; geçersiz test kodu 403 ile reddedilir.
+- Pilotun mutlak sunucu süresi erişimi kapatır ve Gemini HTTP isteğini iptal eder; remote `ANALYSIS_ENABLED` secret'ını değiştirmez. Ana süreç/bağımsız watchdog false yazımını ve 503 yanıtını ayrıca doğrular. Önceden gönderilmiş bir veritabanı işlemi geri alınmış sayılmaz.
+- Pilot test kodu yalnız ekran belleğinde tutulur; `VITE_`, kalıcı depolama veya log'a eklenmez. Native HMAC doğrulaması kullanılır.
+- Fonksiyon CORS tam origin listesi kullanır; gateway kaynaklı 401 yanıtlarında ACAO `*` görülebilir. CORS kimlik doğrulama değildir; originsiz istek de erişim kontrolünden geçer.
 - Isolate başına 3 istek/IP/dakika, 30 istek/saat ve 2 eşzamanlı çağrı sınırı vardır. IP header'ı yardımcı sinyaldir; bellek içi sınırlar dağıtık kalıcı kota sağlamaz.
-- Gövde okuma 10 saniye, Gemini çağrısı 35 saniye, normal analiz istemcisi 75 saniye zaman aşımına tabidir. Provider yanıtı en fazla 64.000 bayt okunur; kesin test süresi bu bütçelerden önce dolabilir.
+- Gövde okuma 10 saniye, Gemini çağrısı 35 saniye; normal sunucu bütçesi 90, istemci 100 saniyedir. Pilot istemci 75 saniyedir. Provider yanıtı en fazla 64.000 bayt okunur; kesin test süresi bu bütçelerden önce dolabilir.
 - Uygulama fotoğrafı, base64 verisini, tokenları veya ham Gemini yanıtını veritabanına kaydetmez. Başarılı ve doğrulanmış analiz metni, kategori, model ve güvenlik alanları `waste_analyses` tablosunda kullanıcıya ait saklanır. Etkin analizde görüntü Supabase ve Google üzerinden işlenir; sağlayıcı veri politikaları ayrıca geçerlidir.
 - RLS kullanıcıya yalnız kendi kayıtları için SELECT/DELETE izni verir. Anonim erişim ve istemci INSERT/UPDATE kapalıdır. Sunucunun service role yetkisi tablo üzerinde SELECT/INSERT ile sınırlandırılmıştır; sahiplik doğrulanmış JWT'den alınır.
-- `(user_id, client_request_id)` benzersizliği çift kaydı engeller; farklı sunucu isolate'larında eşzamanlı iki Gemini çağrısını tek başına engellemez. Frontend ve Gemini adaptörü otomatik analiz tekrarı yapmaz.
+- `(user_id, client_request_id)` benzersizliği çift kaydı engeller; kalıcı kota defteri ayrıca farklı isolate’larda aynı kullanıcı/isteğin yeniden kabulünü engeller. Frontend ve Gemini adaptörü otomatik analiz tekrarı yapmaz.
 - Geçmiş istekleri oturumu ve beklenen kullanıcıyı öncesinde/sonrasında kontrol eder. Çıkış veya hesap değişiminde istek iptali ve geç gelen yanıtın reddi uygulanır; JWT'nin sunucudaki geçerlilik süresi ayrıca Supabase tarafından yönetilir.
 - XP şeması kaynak analiz INSERT'iyle atomiktir; profil satırı kilidi ve benzersiz günlük slotlar üç sınırını korur. Silme sonrası özel defterde kalan kota/request izi yeniden puanlamayı önler; hesap silinince CASCADE uygulanır. İstemci veya service role doğrudan XP defterini yazamaz. Canlı kısıt/yetki doğrulaması, önceki izole eşzamanlılık testlerinden ayrı raporlanır.
 - Arena'ya katılım varsayılan kapalıdır. Paylaşılan DTO yalnız sıra, takma ad, XP, seviye/unvan ve kendi satırı işaretini içerir. Takma ad tercihi kaydedilmeden katılım açılmaz; XP fiziksel geri dönüşüm kanıtı değildir.
 
-Koruma kontrollü pilot içindir. Genel kullanım öncesi dağıtık kota, maliyet sınırları, yetkilendirme kapsamı ve operasyonel izleme ayrıca değerlendirilmelidir.
+Normal modda kalıcı kota, doğrulanmış kullanıcıya göre dakikada 1, saatte 3, kayan 24 saatte 5; global saatte 30 ve 24 saatte 100 kabul sınırı uygular. RPC çağrıları yalnız sunucudan yapılır. Görselin SHA256 özeti tekrar kontrolü içindir; fotoğraf saklanmaz. XP günlük üç sınırı ayrıdır. Aktif normal akışın canlı kabulü ve operasyonel izleme hâlâ açıktır.
 
 ## Testler
 
@@ -333,26 +335,27 @@ Unit ve mock tarayıcı testleri gerçek Supabase/Gemini çağrısı yapmaz. Sen
 
 | Kontrol | Güncel sonuç ve kapsam — 17 Ekim 2026; eski adımlar tarihsel olarak belirtilir |
 | --- | --- |
-| TypeScript: React, araçlar ve Edge | Sayfa yükleme değişikliği sonrasında yeniden PASS, exit 0 |
-| ESLint | Sayfa yükleme değişikliği sonrasında yeniden PASS, exit 0 |
-| Uygulama/Edge unit testleri | Güncel koşumda **330/330 PASS**, başarısız 0 |
+| TypeScript: React, araçlar ve Edge | Oturum iptal düzeltmesi sonrasında yeniden PASS, exit 0 |
+| ESLint | Oturum iptal düzeltmesi sonrasında yeniden PASS, exit 0 |
+| Uygulama/Edge unit testleri | Güncel koşumda **333/333 PASS**, başarısız 0 |
 | İzole PostgreSQL/RLS | Kota migration öncesinde yeniden **235/235 PASS**; ayrıca **23/23** bağımsız bağlantılı yarış/araç kontrolü. Yeni kotaya ait bölüm 23 SQL + 6 yarış kontrolüdür |
 | GitHub senkronizasyonu güncel tarayıcı/UX kontrolü | Mevcut Playwright/Edge ile **61/61 masaüstü**, **61/61 mobil 390 px**, **61/61 azaltılmış hareket PASS**; 61 kriterin üç görünümde toplam **183 başarılı yürütümü**. Her gerçek tarayıcı raporu collector'a HTTP 200 ile kaydedildi; önceki 377 sonuç yeni koşum sayılmaz |
-| Kodsuz analiz arayüzü | 17 Ekim yerel hazırlığında **14/14 PASS**, iki görünüm, sentetik fotoğraf; canlı normal mod değildir |
+| Kodsuz analiz arayüzü | Güncel istemciyle yeniden **14/14 PASS**, iki görünüm, sentetik fotoğraf; canlı normal mod değildir |
 | Lazy sayfa / yükleme hatası / fotoğraf temizliği | Güncel gerçek App/router ile **21/21 mock kimlikli kontrol PASS**; dış istek 0 |
 | Geçmiş arayüzü tarihsel mock kontrolleri | Önceki koşumda **48/48 başarılı**; iptal, Escape ve odak dönüşü dahil; yeni canlı servis testi değildir |
 | İstatistik arayüzü tarihsel mock kontrolleri | Önceki koşumda **44/44 başarılı**, 12 senaryo; canlı salt okunur kontrol ayrıca yapıldı |
 | Profilim / Eko Arena tarihsel mock kontrolleri | Önceki koşumda **72/72 başarılı**, 24 senaryo; gerçek Supabase yazma veya canlı XP kabulü değildir |
 | STEP 2B toplam mock tarayıcı kontrolü | **377/377 başarılı**; Auth 21, kurtarma 40, 429/istek 29, UX 48, analiz 18, geçmiş 48, istatistik 44, animasyon 57, profil/Arena 72; STEP 2C'de yeniden koşulmadı |
 | Production build | Yeniden PASS; ana parça 612,48 → 543,13 kB; 500 kB uyarısı sürüyor |
-| Capacitor sync, Android Gradle | Yeni sayfa parçalarıyla `cap sync android` ve çevrimdışı `assembleDebug` PASS |
+| Capacitor sync, Android Gradle | Güncel istemciyle `cap sync android` ve çevrimdışı `assembleDebug` PASS |
 | APK imzası | Yeni APK v2 imza ve 14 üretim dosyası eşleşmesi PASS; 9.897.335 bayt |
 | Kalıcı API kotası canlı migration | PASS; boş özel defter, iki dar RPC, gerçek rollerle 6/6 ret ve mevcut kullanıcı verisinin korunması |
 | STEP 2C onaylı canlı migration | **PASS**; iki yeni tablo, 13 işlev, RLS/ACL/kısıt/index ve mevcut kayıt/hesap korunması doğrulandı |
 | STEP 2C tek kayıt backfill ve gerçek Profilim/Arena | **PASS**; tek 200 XP, Seviye 2, kalan 50 XP, doğru sahiplik; önce opt-out/boş liste, ayrı onayla EkoGezgin katılımı ve sıra #1 |
 | STEP 2C ayrılma kontrolü | Güncel yerel SQL ve bir hedefli mock tarayıcı senaryosu PASS; canlı EkoGezgin katılımı açık kaldı |
 | Gerçek Gemini + sunucudan kayıt + SDK okuma | STEP 4.3: **HTTP 200, saved, doğru kullanıcı ve tek kayıt** |
-| Canlı güvenlik/kapatma | Eksik JWT 401, yanlış public anahtar 403, anonim veri okuma 401/42501; sonunda 503 |
+| Önceki canlı güvenlik/kapatma | STEP 4.3 tarihsel sonuçları: eksik JWT 401, yanlış public anahtar 403, anonim veri okuma 401/42501; sonunda 503 |
+| Güncel kapalı deployment | v14 authenticated, verify_jwt=true, 13 beklenen HTTP sonucu; bozuk/sahte JWT ve yanlış/eksik public anahtar 401, kapalı servis 503. JWT’siz 503 kimlik doğrulama kanıtı değildir; geçerli kullanıcı JWT kontrolü bu koşumda yapılmadı |
 | STEP 5 canlı geçmiş arayüzü okuması | **PASS**, gerçek SDK ile kullanıcıya ait tek kayıt liste/detay ekranlarında okundu; silme onayı Vazgeç ile kapatıldı, gerçek DELETE yapılmadı |
 | Phase 5 / STEP 1 canlı istatistik okuması | **PASS**, 1 analiz / 1 kategori / %100 Plastik; 16 Ekim günü ve 12–18 Ekim haftası 1; yalnız SELECT/HEAD |
 | Gerçek e-posta akışlarının tümü | **Tamamı canlı doğrulandı kabul edilmez**; ilgili Auth/kurtarma raporlarına bakın |
@@ -383,9 +386,9 @@ STEP 2C backfill sonrasında TypeScript, ESLint, unit, SQL/RLS ve production bui
 
 ## Mevcut Durum ve Sınırlamalar
 
-- Function **ACTIVE, sürüm 12, verify_jwt=true**; analiz **kapalı**. `ACTIVE` durumunun analizin açık olduğu anlamına gelmediğine dikkat edilmelidir.
+- Function **ACTIVE, sürüm 14, verify_jwt=true, ANALYSIS_ACCESS_MODE=authenticated**; analiz **kapalı**. `ACTIVE` durumunun analizin açık olduğu anlamına gelmediğine dikkat edilmelidir.
 - `gemini-3.5-flash-lite` ile tek onaylı gerçek web analizi ve kalıcı kayıt doğrulandı. Bu, genel doğruluk, tüm kategoriler veya kota dayanıklılığı kanıtı değildir.
-- Test erişimi süreli ve ayrı onaya bağlıdır; önceki test kodu veya fotoğraf izni yeni test yetkisi sayılmaz.
+- Normal kullanıcı arayüzü test kodu istemez; analiz sunucuda kapalıdır. Pilot erişimi süreli ve ayrı onaya bağlıdır; önceki test kodu veya fotoğraf izni yeni test yetkisi sayılmaz.
 - Emülatörde native kamera/galeri eklentisi sentetik görselle sınandı. Gerçek hesapla native ScanPage, izin reddi, activity geri yükleme ve fiziksel cihaz kabulü açık.
 - Geçmiş listesi/detayı/silme mevcut SDK/RLS üzerinden uygulanmıştır. Gerçek kayıt üzerinde silme veya ikinci kullanıcıya ait veriye erişme testi yapılmaz; silme/izolasyonun otomatik kanıtları canlı testten ayrıdır.
 - Kısa analiz özeti analiz adedini ölçer. XP sistemi farkındalık etkinliğidir; çevresel etki veya fiziksel geri dönüşüm hesabı değildir. Tek analiz için onaylı 200 XP aktarımı ve gerçek profil/Arena okuması doğrulandı; sonraki ayrı onayla EkoGezgin katılımı açıldı. Analiz yanıtına XP/neden eklenmesi ayrı geliştirme gerektirir.
@@ -398,7 +401,7 @@ STEP 2C backfill sonrasında TypeScript, ESLint, unit, SQL/RLS ve production bui
 1. Canlı backfill ve onaylı EkoGezgin katılım raporunu değerlendirmek. Mevcut kaynakta tek 200 XP kazanımı ve Arena'da sıra #1 var; aynı kayıt tekrar puanlanmaz, katılım izinsiz değiştirilmez.
 2. Ayrı kullanıcı izniyle fiziksel Android cihaz akışını ve gerekiyorsa silinmesine açıkça izin verilen bir kayıtta canlı silmeyi doğrulamak. Mevcut korunan gerçek kayıt silinmez.
 3. Yeni gerçek analiz istenirse fotoğraf/gönderim/kalıcı kayıt ve süreli etkinleştirme için yeniden açık onay almak.
-4. Canlıya uygulanan kalıcı kotayı kullanacak kapalı Edge deployment'ı için ayrı onay almak; genel kullanımdan önce normal akışı ve operasyonel izlemeyi doğrulamak.
+4. Tamamlanan kapalı normal mod deployment’ı sonrasında, ayrıca izin verilirse gerçek kullanıcı/normal analiz/kota akışını ve operasyonel izlemeyi doğrulamak.
 5. Güvenli bağımsız yerel geliştirmelere devam etmek; canlı veri/ayar/deployment, secret/erişim değişikliği ve ücretli API işlemleri için açık onay almak.
 
 ## Dokümantasyon ve Resmî Kaynaklar

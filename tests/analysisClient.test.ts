@@ -68,6 +68,42 @@ test("Normal analiz istemcisi kod istemez ve test başlığı göndermez; JWT ko
   assert.equal((await f.send(jpeg(),new AbortController().signal,"")).persistence.status,"saved");
 });
 
+test("Asılı SDK: ilk oturum okuması iptali bekletmez", { timeout: 1000 }, async () => {
+  const f = fixture(), controller = new AbortController();
+  let started!: () => void;
+  const ready = new Promise<void>((resolve) => { started = resolve; });
+  f.auth.getSession = () => { started(); return new Promise(() => {}); };
+  const request = f.send(jpeg(), controller.signal);
+  await ready; controller.abort();
+  await assert.rejects(request, code("CANCELLED"));
+  assert.equal(f.calls, 0); assert.equal(f.unsubscribed, 1);
+});
+
+test("Asılı SDK: çıkış eski hesabın isteğini hemen reddeder", { timeout: 1000 }, async () => {
+  const f = fixture();
+  let started!: () => void;
+  const ready = new Promise<void>((resolve) => { started = resolve; });
+  f.auth.getSession = () => { started(); return new Promise(() => {}); };
+  const request = f.send();
+  await ready; f.emit("SIGNED_OUT", null);
+  await assert.rejects(request, code("USER_UNAUTHORIZED"));
+  assert.equal(f.calls, 0); assert.equal(f.unsubscribed, 1);
+});
+
+test("Asılı SDK: son kimlik kontrolü iptalinde sonuç gösterilmez", { timeout: 1000 }, async () => {
+  const f = fixture(), controller = new AbortController();
+  let reads = 0, started!: () => void;
+  const ready = new Promise<void>((resolve) => { started = resolve; });
+  f.auth.getSession = async () => {
+    if (++reads === 1) return { data: { session: session() }, error: null };
+    started(); return new Promise(() => {});
+  };
+  const request = f.send(jpeg(), controller.signal);
+  await ready; controller.abort();
+  await assert.rejects(request, code("CANCELLED"));
+  assert.equal(f.calls, 1); assert.equal(f.unsubscribed, 1);
+});
+
 test("Analiz istemcisi SDK JWT ve UUID başlıklarını gönderir; kullanıcı kimliği gövdeye yazılmaz", async () => {
   const f = fixture(), photo = jpeg(); let calls = 0;
   f.dependencies.transport = async (url, init) => {

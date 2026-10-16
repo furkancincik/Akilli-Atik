@@ -3,6 +3,7 @@ import { AnalysisError } from "../../supabase/functions/_shared/analysis.ts";
 import type { AnalysisOutcome } from "../../supabase/functions/_shared/analysis.ts";
 import { requestAnalysis } from "../services/analysis";
 import { useAuth } from "../auth/useAuth";
+import { normalAnalysisAccess } from "../services/analysisAccess";
 
 export function useWasteAnalysis(photo: Blob | undefined) {
   const { user } = useAuth();
@@ -40,9 +41,9 @@ export function useWasteAnalysis(photo: Blob | undefined) {
     const timer = setTimeout(() => {
       timedOut = true;
       controller.abort();
-    // Auth (8s), body read (10s), lookup (5s), Gemini (35s), insert/conflict
-    // lookup (10s) each have their own server deadline. Allow their full budget.
-    }, 75000);
+    // Normal server execution is bounded by 90s, plus quota lease finalization.
+    // Leave transport headroom; the pilot's absolute server cutoff stays intact.
+    }, normalAnalysisAccess ? 100000 : 75000);
     try {
       const outcome = await requestAnalysis(photo, controller.signal, testToken, clientRequestId, userId);
       if (id === version.current)
