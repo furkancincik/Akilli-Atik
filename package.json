@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b && tsc -p tsconfig.edge.json",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:db": "node scripts/test-database.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "android:sync": "npm run build && cap sync android",

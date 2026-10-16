@@ -8,6 +8,7 @@ import {
 } from "../_shared/analysis.ts";
 import type { WasteAnalysis } from "../_shared/analysis.ts";
 import { readLimitedBody } from "../_shared/image.ts";
+import type { AnalysisDeadline } from "./deadline.ts";
 
 export const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 const SYSTEM_PROMPT = `Sen Türkiye'deki atık ayrıştırması için görsel sınıflandırma yardımcısısın. Tüm açıklamalar Türkçe olsun.
@@ -45,13 +46,19 @@ export async function analyzeWithGemini(
   key: string,
   model = DEFAULT_MODEL,
   transport: typeof fetch = fetch,
+  deadline?: Pick<AnalysisDeadline, "signal" | "assertOpen">,
 ): Promise<WasteAnalysis> {
+  deadline?.assertOpen();
   if (!key.trim()) throw new AnalysisError("MISSING_API_KEY");
   if (!/^gemini-[a-z0-9.-]+$/.test(model))
     throw new AnalysisError("SERVICE_ERROR");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 35000);
+  const abortAtDeadline = () => controller.abort();
+  deadline?.signal.addEventListener("abort", abortAtDeadline, { once: true });
+  if (deadline?.signal.aborted) controller.abort();
   try {
+    deadline?.assertOpen();
     const response = await transport(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
@@ -78,6 +85,7 @@ export async function analyzeWithGemini(
         }),
       },
     );
+    deadline?.assertOpen();
     if (!response.ok) {
       if (response.status === 400) {
         try {
@@ -115,6 +123,7 @@ export async function analyzeWithGemini(
       "INVALID_RESPONSE",
       controller.signal,
     );
+    deadline?.assertOpen();
     let payload: unknown;
     try {
       payload = JSON.parse(new TextDecoder().decode(raw));
@@ -123,10 +132,12 @@ export async function analyzeWithGemini(
     }
     return extractGeminiAnalysis(payload);
   } catch (error) {
+    deadline?.assertOpen();
     if (error instanceof AnalysisError) throw error;
     if (controller.signal.aborted) throw new AnalysisError("TIMEOUT");
     throw new AnalysisError("SERVICE_ERROR");
   } finally {
     clearTimeout(timer);
+    deadline?.signal.removeEventListener("abort", abortAtDeadline);
   }
 }

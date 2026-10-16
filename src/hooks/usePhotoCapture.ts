@@ -19,10 +19,13 @@ export function usePhotoCapture() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const processing = useRef(false);
+  const alive = useRef(false);
   const previewUrl = useRef<string | null>(null);
   const navigate = useNavigate();
 
   const replacePhoto = useCallback((prepared: PreparedPhoto) => {
+    // Account change can unmount this hook while the OS/file decoder is working.
+    if (!alive.current) return;
     const url = URL.createObjectURL(prepared.blob);
     if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
     previewUrl.current = url;
@@ -38,12 +41,13 @@ export function usePhotoCapture() {
     try {
       replacePhoto(await operation());
     } catch (reason) {
+      if (!alive.current) return;
       const message = photoErrorMessage(reason);
       setError(message);
       if (!message) setNotice("Fotoğraf seçimi iptal edildi.");
     } finally {
       processing.current = false;
-      setBusy(false);
+      if (alive.current) setBusy(false);
     }
   }
 
@@ -92,12 +96,13 @@ export function usePhotoCapture() {
     };
   }, [navigate, replacePhoto]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
       if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
-    },
-    [],
-  );
+    };
+  }, []);
 
   return {
     photo,

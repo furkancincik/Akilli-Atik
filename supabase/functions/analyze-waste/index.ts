@@ -31,6 +31,8 @@ Deno.serve(
     testToken: Deno.env.get("ANALYSIS_TEST_TOKEN"),
     testExpiresAt: Deno.env.get("ANALYSIS_TEST_EXPIRES_AT"),
     apiKey: Deno.env.get("GEMINI_API_KEY") ?? "",
+    supabaseUrl: Deno.env.get("SUPABASE_URL") ?? "",
+    serviceRoleKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     model: Deno.env.get("GEMINI_MODEL") || undefined,
     publicKeys: publicKeys(),
     allowedOrigins: (

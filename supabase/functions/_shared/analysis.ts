@@ -22,6 +22,16 @@ export interface WasteAnalysis {
   hazardous: boolean;
 }
 
+export type AnalysisPersistence =
+  | { status: "saved" | "duplicate"; id: string }
+  | { status: "failed" | "not_saved" };
+export interface AnalysisOutcome {
+  result: WasteAnalysis;
+  persistence: AnalysisPersistence;
+}
+
+export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export const ERROR_MESSAGES = {
   TEST_ACCESS_REQUIRED:
     "Canlı test erişim kodu eksik, geçersiz veya süresi dolmuş. Geçerli test kodunu girip yeniden dene.",
@@ -35,6 +45,12 @@ export const ERROR_MESSAGES = {
     "Gemini erişim ayarları geçersiz. Sunucu API anahtarı ve erişim izinleri kontrol edilmeli.",
   UNAUTHORIZED:
     "Analiz hizmetine erişim doğrulanamadı. Uygulamanın bağlantı ayarları kontrol edilmeli.",
+  USER_UNAUTHORIZED:
+    "Oturumun doğrulanamadı veya süresi doldu. Yeniden giriş yapıp tekrar dene.",
+  AUTH_UNAVAILABLE:
+    "Oturum doğrulama hizmetine ulaşılamadı. Bir süre sonra tekrar dene.",
+  INVALID_REQUEST_ID:
+    "Analiz istek kimliği geçersiz. Fotoğrafı yeniden seçip tekrar dene.",
   OFFLINE: "İnternet bağlantısı yok. Bağlantını kontrol edip yeniden dene.",
   NETWORK_ERROR:
     "Analiz hizmetine ulaşılamadı. İnternet bağlantını kontrol edip yeniden dene.",
@@ -143,6 +159,27 @@ export function parseAnalysis(value: unknown): WasteAnalysis {
   return result;
 }
 
+/** Validate analysis and persistence independently; never infer that a save succeeded. */
+export function parseAnalysisOutcome(value: unknown): AnalysisOutcome {
+  const data = record(value);
+  if (Object.keys(data).some((key) => !["result", "persistence"].includes(key)))
+    throw new AnalysisError("INVALID_RESPONSE");
+  const result = parseAnalysis(data.result);
+  const persistence = record(data.persistence);
+  const saved = persistence.status === "saved" || persistence.status === "duplicate";
+  if (saved) {
+    if (!result.success || typeof persistence.id !== "string" || !UUID_PATTERN.test(persistence.id) ||
+      Object.keys(persistence).some((key) => !["status", "id"].includes(key)))
+      throw new AnalysisError("INVALID_RESPONSE");
+    return { result, persistence: { status: persistence.status as "saved" | "duplicate", id: persistence.id } };
+  }
+  if ((persistence.status !== "failed" && persistence.status !== "not_saved") ||
+    Object.keys(persistence).some((key) => key !== "status") ||
+    (result.success ? persistence.status !== "failed" : persistence.status !== "not_saved"))
+    throw new AnalysisError("INVALID_RESPONSE");
+  return { result, persistence: { status: persistence.status } };
+}
+
 export const HAZARDOUS_SORTING =
   "Evsel çöpe veya normal geri dönüşüm kutusuna atma. Diğer atıklardan ayrı tut; belediyenin ya da yetkili kuruluşun bu atık için belirlediği toplama noktasına teslim et.";
 export const HAZARDOUS_WARNING =
@@ -220,7 +257,8 @@ export function edgeError(value: unknown, status: number): AnalysisError {
   } catch {
     /* Gateway responses need not use our JSON contract. */
   }
-  if (status === 401 || status === 403)
+  if (status === 401) return new AnalysisError("USER_UNAUTHORIZED");
+  if (status === 403)
     return new AnalysisError("UNAUTHORIZED");
   if (status === 429) return new AnalysisError("RATE_LIMITED");
   if (status === 408 || status === 504) return new AnalysisError("TIMEOUT");

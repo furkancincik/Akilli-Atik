@@ -102,7 +102,8 @@ export function ScanPage({ capture }: { capture: PhotoCapture }) {
         <p className="notice">
           JPG, PNG veya WebP · En fazla 20 MB. Fotoğraf bu oturumda tutulur.
           Analiz düğmesine bastığında küçültülmüş fotoğraf Supabase üzerinden
-          Google Gemini’ye gönderilir; analiz geçmişi kaydedilmez.
+          Google Gemini’ye gönderilir. Başarılı analiz sonucu hesabına kaydedilmeye
+          çalışılır; fotoğrafın veritabanında saklanmaz.
         </p>
         <div className="analysis-actions">
           <label className="test-access-label">
@@ -119,7 +120,7 @@ export function ScanPage({ capture }: { capture: PhotoCapture }) {
             />
           </label>
           <p className="photo-help">
-            Analiz şu anda süreli test erişimine açıktır. Kod yalnız bu ekranın
+            Analiz yalnız onaylı süreli testlerde açılır. Kod yalnız bu ekranın
             belleğinde tutulur.
           </p>
           <button
@@ -143,7 +144,11 @@ export function ScanPage({ capture }: { capture: PhotoCapture }) {
               ? "Fotoğrafın değerlendiriliyor. Bu işlem biraz zaman alabilir."
               : analysis.result
                 ? analysis.result.success
-                  ? "Atık analizi tamamlandı."
+                  ? analysis.persistence?.status === "saved"
+                    ? "Atık analizi tamamlandı ve hesabına kaydedildi."
+                    : analysis.persistence?.status === "duplicate"
+                      ? "Bu fotoğrafın analizi daha önce hesabına kaydedilmiş."
+                      : "Atık analizi tamamlandı ancak hesabına kaydedilemedi. Sonucunu aşağıda görebilirsin. Aynı fotoğrafla yeniden deneyebilirsin."
                   : "Atık tespit edilemedi."
                 : null}
           </p>

@@ -1,21 +1,30 @@
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { validateSupabaseConfiguration } from "./supabaseConfiguration";
 
-// Only public configuration; no authentication/session lookup or network request.
+// Analysis uses only public configuration; its HTTP contract remains unchanged.
 export function getSupabaseConfiguration() {
   return validateSupabaseConfiguration(
     import.meta.env.VITE_SUPABASE_URL,
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   );
 }
-export function createConfiguredSupabaseClient() {
+let sharedClient: SupabaseClient | null | undefined;
+
+// A single SDK client owns session persistence. Never copy tokens to other stores.
+export function createConfiguredSupabaseClient(): SupabaseClient | null {
+  if (sharedClient !== undefined) return sharedClient;
   const config = getSupabaseConfiguration();
-  if (!config) return null;
-  return createClient(config.url, config.key, {
+  if (!config) return (sharedClient = null);
+  sharedClient = createClient(config.url, config.key, {
     auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+      autoRefreshToken: true,
+      persistSession: true,
+      // Email confirmation opens in the browser; password login follows manually.
+      // Never turn arbitrary URL fragments into a WebView session.
       detectSessionInUrl: false,
+      flowType: "pkce",
     },
   });
+  return sharedClient;
 }

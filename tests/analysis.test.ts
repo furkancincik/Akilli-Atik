@@ -20,7 +20,7 @@ import {
   extractGeminiAnalysis,
 } from "../supabase/functions/analyze-waste/gemini.ts";
 import {
-  createHandler,
+  createHandler as createServerHandler,
   createLimiter,
 } from "../supabase/functions/analyze-waste/handler.ts";
 import type { ServerConfig } from "../supabase/functions/analyze-waste/handler.ts";
@@ -111,6 +111,8 @@ function request(
       "Content-Type": "image/jpeg",
       "x-analysis-test-token": "test-only-private-code-at-least-32-characters",
       apikey: "test-public-key",
+      Authorization: "Bearer test.jwt.signature",
+      "x-client-request-id": "00000000-0000-4000-8000-000000000003",
       Origin: "https://localhost",
       ...headers,
     },
@@ -118,6 +120,20 @@ function request(
   });
 }
 const goodTransport: typeof fetch = async () => Response.json(payload());
+
+// Existing validation tests keep isolated Auth/storage dependencies. The separate
+// authentication/handler/storage suites exercise those boundaries explicitly.
+function createHandler(settings: ServerConfig, transport: typeof fetch = fetch) {
+  return createServerHandler(settings, transport, Date.now, {
+    verifyUser: async () => ({ id: "00000000-0000-4000-8000-000000000001" }),
+    store: {
+      find: async () => null,
+      save: async (_user, _request, result, model) => ({
+        status: "saved", id: "00000000-0000-4000-8000-000000000004", result, model, schemaVersion: 1,
+      }),
+    },
+  });
+}
 
 test("Pilav gibi organik nesne adları pil olarak işaretlenmez", () => {
   const result = parseAnalysis({
