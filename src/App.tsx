@@ -1,11 +1,7 @@
-import { useState } from "react";
+import { lazy, useState } from "react";
 import { Navigate, Route, Routes } from "react-router";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./pages/HomePage";
-import { ScanPage } from "./pages/ScanPage";
-import { HistoryPage } from "./pages/HistoryPage";
-import { ProfilePage } from "./pages/ProfilePage";
-import { EcoArenaPage } from "./pages/EcoArenaPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { usePhotoCapture } from "./hooks/usePhotoCapture";
@@ -14,8 +10,15 @@ import { RequireAuth } from "./auth/RequireAuth";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { FORGOT_PATH, RECOVERY_PATH } from "./services/passwordRecovery";
-import { DashboardPage } from "./pages/DashboardPage";
 import { DASHBOARD_PATH } from "./auth/routeAccess";
+
+// Keep the public/auth shell small. Declare once so navigation/token refresh
+// cannot recreate lazy identities or reset per-account photo state.
+const DashboardPage = lazy(() => import("./pages/DashboardPage").then((page) => ({ default: page.DashboardPage })));
+const ScanPage = lazy(() => import("./pages/ScanPage").then((page) => ({ default: page.ScanPage })));
+const HistoryPage = lazy(() => import("./pages/HistoryPage").then((page) => ({ default: page.HistoryPage })));
+const ProfilePage = lazy(() => import("./pages/ProfilePage").then((page) => ({ default: page.ProfilePage })));
+const EcoArenaPage = lazy(() => import("./pages/EcoArenaPage").then((page) => ({ default: page.EcoArenaPage })));
 export function App() {
   const { user, status, identityVersion } = useAuth();
   const [hasAuthenticated, setHasAuthenticated] = useState(status === "authenticated");

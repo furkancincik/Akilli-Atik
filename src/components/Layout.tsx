@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import { DASHBOARD_PATH } from "../auth/routeAccess";
+import { RouteContent } from "./RouteContent";
 import {
   Recycle,
   House,
@@ -107,7 +108,7 @@ export function Layout() {
           {auth.error && auth.status === "anonymous" && <button type="button" className="button secondary" disabled={signingOut} onClick={() => void logout()}>
             Cihazdaki oturumu temizle
           </button>}
-          <Outlet />
+          <RouteContent key={pathname}><Outlet /></RouteContent>
         </main>
         <footer className="footer">
           <span>Her atık, yeni bir başlangıç olabilir.</span>
