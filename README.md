@@ -333,7 +333,7 @@ Unit ve mock tarayıcı testleri gerçek Supabase/Gemini çağrısı yapmaz. Sen
 | ESLint | GitHub senkronizasyonu öncesinde yeniden PASS, exit 0 |
 | Uygulama/Edge unit testleri | Güncel koşumda **303/303 PASS**, başarısız 0 |
 | İzole PostgreSQL/RLS | Güncel koşumda **212/212 PASS**; ayrıca **17/17** bağımsız bağlantılı yarış/araç kontrolü, toplam **229** |
-| GitHub senkronizasyonu güncel tarayıcı/UX kontrolü | **Kullanıcı tarafından manuel PASS bildirildi**; yerel QA sayfası tarayıcıda çalıştırıldı. Collector raporu oluşmadığı için bağımsız otomatik kontrol sayısı doğrulanmadı; önceki 377 sonuç yeni koşum sayılmaz |
+| GitHub senkronizasyonu güncel tarayıcı/UX kontrolü | Mevcut Playwright/Edge ile **61/61 masaüstü**, **61/61 mobil 390 px**, **61/61 azaltılmış hareket PASS**; 61 kriterin üç görünümde toplam **183 başarılı yürütümü**. Her gerçek tarayıcı raporu collector'a HTTP 200 ile kaydedildi; önceki 377 sonuç yeni koşum sayılmaz |
 | Geçmiş arayüzü mock tarayıcı kontrolleri | **48/48 başarılı**; iptal, Escape ve odak dönüşü dahil; gerçek servis testi değildir |
 | İstatistik arayüzü mock tarayıcı kontrolleri | **44/44 başarılı**, 12 senaryo; canlı salt okunur kontrol ayrıca yapıldı |
 | Yeni Profilim / Eko Arena mock tarayıcı | **72/72 başarılı**, 24 senaryo; gerçek Supabase yazma veya canlı XP kabulü değildir |
