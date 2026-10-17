@@ -2,11 +2,25 @@
 
 Akıllı Atık, atık fotoğraflarından Türkçe ayrıştırma önerileri sunan bir üniversite sosyal sorumluluk projesidir. React arayüzü Capacitor ile Android uygulamasına paketlenir; görüntü analizi güvenli Supabase Edge Function üzerinden Google Gemini API ile gerçekleştirilir. Başarılı analizlerin metin sonuçları kullanıcıya özel saklanır.
 
-**Güncel durum — 17 Ekim 2026:** Kalıcı kota migration’ı ve normal kullanıcı modu yalnız Akıllı Atık projesine deploy edildi: **Edge v14 / ACTIVE / verify_jwt=true / ANALYSIS_ACCESS_MODE=authenticated**. **ANALYSIS_ENABLED=false** korunuyor; analiz açılmadı. Mevcut kullanıcı/analiz/XP/profil verisi değişmedi, kota defteri boş. Güncel 333 unit, 14 yerel normal arayüz ve 9 anonim emülatör kontrolü geçti. [Kapalı deployment ve doğrulama kapsamı](docs/authenticated-closed-deployment.md).
+**Güncel durum — 17 Ekim 2026:** Normal kullanıcı analizi gerçek Android emülatöründe, test kodu olmadan ve kullanıcı JWT’siyle doğrulandı. Onaylı tek görsel/tek istek **HTTP 200**, geçerli Türkçe JSON ve kullanıcıya ait yeni kalıcı kayıt üretti. Tek kota kabulü tamamlandı; tek 200 XP kazanımıyla toplam **400 XP / Seviye 3** oldu. Gerçek SDK Geçmiş, Profilim ve Eko Arena okumaları eşleşti. Test sonunda analiz kapatıldı: **Edge v18 / ACTIVE / verify_jwt=true / ANALYSIS_ACCESS_MODE=authenticated / ANALYSIS_ENABLED=false**, HTTP 503. v14 kodu yeniden deploy edilmedi; sürüm artışları onaylı secret ayarı/kapatma işlemlerinden kaynaklandı. Fiziksel cihaz kabulü ayrı ve açıktır. Önceki [kapalı deployment kaydı](docs/authenticated-closed-deployment.md) tarihsel v14 hazırlığını açıklar.
 
 Kişisel sayfalar ihtiyaç anında yüklenir; yükleme hatasında menü/çıkış kullanılabilir kalır. Ana JavaScript parçası yaklaşık %11,3 küçültüldü. [Sayfa yükleme ve güncel APK doğrulaması](docs/route-loading-verification.md).
 
 **Önceki canlı doğrulama — 16 Ekim 2026, Phase 5 / STEP 2C:** Onaylı migration sonrasında yalnız izin verilen tek plastik şişe analizine atomik **200 XP** aktarıldı. Gerçek kullanıcı SDK'sı ve Profilim ekranı **Seviye 2, Geri Dönüşüm Çırağı, %66,67 ilerleme ve kalan 50 XP** ile eşleşiyor. Tek kazanım ve gerekli tek profil var; mevcut analiz/hesap korundu. Önce katılmamış hesabın görünmediği, sonra ayrı kullanıcı onayıyla **EkoGezgin / Arena katılımı açık / sıra #1** doğrulandı. Canlı listede yalnız izin verilen takma ad, XP, seviye ve sıra bilgileri var. RLS/yetkiler, Edge **v12 / verify_jwt=true** ve **ANALYSIS_ENABLED=false** korundu. Onaylanan kapsam **PASS**; ayrılma kontrolü canlı katılım kapatılmadan izole testlerle yapıldı. [Canlı backfill raporu](docs/phase5-step2c-live-backfill.md) güncel sonucu, [migration raporu](docs/phase5-step2c-live-migration.md) önceki şema uygulamasını açıklar.
+
+## Normal Kullanıcı Canlı Kabulü — 17 Ekim 2026
+
+Test **14:38 TRT** civarında, yalnız nyoxbwandadakfagoner projesinde ve mevcut test hesabında yapıldı. Onaylanan plastik şişe görseli native galeriden seçildi; başka fotoğraf Gemini’ye gönderilmedi. Tek gerçek fonksiyon POST isteği kullanıldı, otomatik tekrar yapılmadı. Fonksiyonun HTTP 200 yanıtındaki sonuç **Plastik Su Şişesi / Plastik / single / uncertain=false**, JSON sözleşmesine uygun ve Türkçedir. Sunucu kaydındaki model gemini-3.5-flash-lite. Google’ın upstream HTTP kodu ayrıca kaydedilmedi; gerçek ölçülen HTTP kodu Edge yanıtına aittir.
+
+Yeni kayıt: 003e72e1-d565-4712-a60b-40a3e52c110c. Önceki korunan kayıtla aynı kullanıcı sahipliği SQL üzerinden; yeni kaydın okunması uygulamanın gerçek kullanıcı SDK’sıyla doğrulandı. Toplam analiz sayısı 1 → 2, özel kota kabulü 0 → 1 ve tamamlanmış durumda. Tek yeni XP satırı **200 XP**, 17 Ekim günlük slotu **1**. API kabul sınırı ile günlük üç puanlı analiz sınırı ayrı defterlerde kaldı. Aynı gün kota aşımı veya ikinci gerçek analiz denenmedi.
+
+Profilim **400 XP / Seviye 3 · Çevre Dostu / %60 ilerleme / kalan 100 XP**; Eko Arena **EkoGezgin / #1 / 400 XP** gösterdi. Arena SDK yanıtında yalnız tanımlı liste alanları bulundu; e-posta, kullanıcı kimliği veya token alanı yoktu. Eski analiz parmak izi ve takma ad/katılım tercihleri değişmedi; hiçbir kayıt silinmedi. Fotoğraf, base64, JWT ve anahtarlar veritabanına yazılmadı; kota yalnız görselin SHA256 özetini tutar.
+
+Kapatma önce servis kapalıyken gerçek prova ile sınandı. Canlı deneme öncesi bağımsız 3 dakikalık watchdog başlatıldı; ana süreç sonucu alır almaz false yazdı, watchdog da kapanışı doğruladı. İkisi de **HTTP 503 / SERVICE_DISABLED** gözledi. Normal modun 90 saniyelik istek süresi, pilotun mutlak global bitiş zamanı değildir; yerel watchdog da bilgisayar/ağ arızasında remote flag sıfırlamasını matematiksel olarak garanti etmez. Bu testte gerçek kapatma kanıtlandı; servis açık bırakılmadı.
+
+Gerçek emülatör testleri; oturum geri yükleme, kamera/galeri ve önizleme, galeri iptali, Geçmiş detay, Profilim, XP/seviye, Arena, navigasyon ve yatay taşma kontrollerini kapsadı. Gerçek çıkıştan sonra kişisel içerik/fotoğraf kayboldu, korumalı rota karşılama ekranına döndü; sayfa yenilenince anonim erişim girişe yönlendi. İlk test sürücüsündeki hemen /giris bekleme hatası kaynak kodla karşılaştırılarak düzeltildi; başarısız ilk koşum gizlenmedi. Emülatör yeniden açılışında WebView bağlantısı hazır olmadan yapılan ilk bağlantı denemesi de tekrarlandı; uygulama hatası bulunmadı.
+
+Kalite kontrolleri: **333/333 unit, 235/235 SQL/RLS, 23/23 eşzamanlılık/aktarım, 183/183 UX ve 14/14 normal arayüz**; TypeScript, ESLint, production build, Capacitor sync, çevrimdışı Gradle ve APK v2 imzası PASS. Bunlar canlı kayıt testinden ayrı koşumlardır. Bu adımda uygulama/Edge kaynak kodu, migration veya deployment değişmedi. APK 9.897.335 bayt; fiziksel Android cihaz, izin reddi, kamera açıkken activity öldürülmesi, ikinci hesapla canlı izolasyon ve tüm gerçek e-posta akışları açık. Release/AAB ve mağaza yayını bu kabul değildir.
 
 ## Proje Tanıtımı
 
@@ -37,7 +51,7 @@ Projenin amacı, bir fotoğraf üzerinden anlaşılır yönlendirme sağlayarak 
 - Public proje anahtarı, platform ve uygulama JWT kontrolü, kesin CORS listesi, moda bağlı süreli pilot erişimi ve kalıcı kullanıcı/global API kotaları.
 - Başarılı analiz metninin sunucuda kullanıcı sahipliğiyle kaydı; analiz başarısı ile kayıt başarısının ayrı gösterimi.
 - Kullanıcıya özel geçmiş listesi, kayıt detayları, yenileme, 12 kayıtlık sayfalama ve onayla silme.
-- Profilim: takma ad, XP, seviye/unvan, ilerleme, doğrulanabilir rozetler, kendi sırası ve isteğe bağlı Arena katılımı; gerçek hesapta 200 XP/Seviye 2/İlk Tanıma ve analiz özeti; ayrı onayla EkoGezgin takma adı/katılım kaydı doğrulandı.
+- Profilim: takma ad, XP, seviye/unvan, ilerleme, doğrulanabilir rozetler, kendi sırası ve isteğe bağlı Arena katılımı; gerçek hesapta 400 XP/Seviye 3 ve analiz özeti; ayrı onayla EkoGezgin takma adı/katılım kaydı doğrulandı.
 - Eko Arena: yalnız gönüllü katılımcılar, ilk üç sıra, 20 kişilik sayfalama, kendi satırı ve yenileme; sahte kullanıcı bulunmaz.
 - Mevcut tam kayıt istatistik hesaplamalarıyla kısa kişisel özet ve son üç analiz; grafik ekranı ürün navigasyonunda bulunmaz.
 - Hesap kapsamlı yükleme/boş/hata yönetimi, çıkış ve kullanıcı değişiminde kişisel verinin temizlenmesi.
@@ -316,7 +330,7 @@ Pil, elektronik, tehlikeli işareti veya riskli nesne adı için ayrıştırma m
 - XP şeması kaynak analiz INSERT'iyle atomiktir; profil satırı kilidi ve benzersiz günlük slotlar üç sınırını korur. Silme sonrası özel defterde kalan kota/request izi yeniden puanlamayı önler; hesap silinince CASCADE uygulanır. İstemci veya service role doğrudan XP defterini yazamaz. Canlı kısıt/yetki doğrulaması, önceki izole eşzamanlılık testlerinden ayrı raporlanır.
 - Arena'ya katılım varsayılan kapalıdır. Paylaşılan DTO yalnız sıra, takma ad, XP, seviye/unvan ve kendi satırı işaretini içerir. Takma ad tercihi kaydedilmeden katılım açılmaz; XP fiziksel geri dönüşüm kanıtı değildir.
 
-Normal modda kalıcı kota, doğrulanmış kullanıcıya göre dakikada 1, saatte 3, kayan 24 saatte 5; global saatte 30 ve 24 saatte 100 kabul sınırı uygular. RPC çağrıları yalnız sunucudan yapılır. Görselin SHA256 özeti tekrar kontrolü içindir; fotoğraf saklanmaz. XP günlük üç sınırı ayrıdır. Aktif normal akışın canlı kabulü ve operasyonel izleme hâlâ açıktır.
+Normal modda kalıcı kota, doğrulanmış kullanıcıya göre dakikada 1, saatte 3, kayan 24 saatte 5; global saatte 30 ve 24 saatte 100 kabul sınırı uygular. RPC çağrıları yalnız sunucudan yapılır. Görselin SHA256 özeti tekrar kontrolü içindir; fotoğraf saklanmaz. XP günlük üç sınırı ayrıdır. Aktif normal akışın tek çağrılık gerçek emülatör kabulü doğrulandı. Canlı kota aşımı/çoklu kullanıcı yükü ve operasyonel izleme hâlâ açıktır; yerel eşzamanlılık testleri bunların yerine canlı test sayılmaz.
 
 ## Testler
 
@@ -355,11 +369,13 @@ Unit ve mock tarayıcı testleri gerçek Supabase/Gemini çağrısı yapmaz. Sen
 | STEP 2C ayrılma kontrolü | Güncel yerel SQL ve bir hedefli mock tarayıcı senaryosu PASS; canlı EkoGezgin katılımı açık kaldı |
 | Gerçek Gemini + sunucudan kayıt + SDK okuma | STEP 4.3: **HTTP 200, saved, doğru kullanıcı ve tek kayıt** |
 | Önceki canlı güvenlik/kapatma | STEP 4.3 tarihsel sonuçları: eksik JWT 401, yanlış public anahtar 403, anonim veri okuma 401/42501; sonunda 503 |
-| Güncel kapalı deployment | v14 authenticated, verify_jwt=true, 13 beklenen HTTP sonucu; bozuk/sahte JWT ve yanlış/eksik public anahtar 401, kapalı servis 503. JWT’siz 503 kimlik doğrulama kanıtı değildir; geçerli kullanıcı JWT kontrolü bu koşumda yapılmadı |
+| Güncel kapalı servis güvenliği | Test sonrası v18 authenticated, verify_jwt=true; 13 beklenen HTTP sonucu ve altı gerçek SQL rol reddi yeniden doğrulandı. Bozuk/sahte JWT ve yanlış/eksik public anahtar 401; kapalı servis 503. JWT’siz 503 tek başına kimlik doğrulama kanıtı değildir |
+| Normal kullanıcı canlı emülatör analizi | Tek POST, HTTP 200, geçerli JSON, saved; kullanıcı JWT/public anahtar var, test kodu yok. Bir kota kabulü, tek 200 XP; Geçmiş/Profilim/Arena için 8 gerçek SDK/arayüz kontrolü PASS |
+| Gerçek native oturum/kamera/çıkış | Süreç yeniden açılışında gerçek oturum ve 400 XP okuması; ScanPage kamera önizlemesi 1200×1600, native galeri önizlemesi 1448×1086. Galeri iptali/çıkış sonrası dört kontrol PASS |
 | STEP 5 canlı geçmiş arayüzü okuması | **PASS**, gerçek SDK ile kullanıcıya ait tek kayıt liste/detay ekranlarında okundu; silme onayı Vazgeç ile kapatıldı, gerçek DELETE yapılmadı |
 | Phase 5 / STEP 1 canlı istatistik okuması | **PASS**, 1 analiz / 1 kategori / %100 Plastik; 16 Ekim günü ve 12–18 Ekim haftası 1; yalnız SELECT/HEAD |
 | Gerçek e-posta akışlarının tümü | **Tamamı canlı doğrulandı kabul edilmez**; ilgili Auth/kurtarma raporlarına bakın |
-| Android emülatör / fiziksel cihaz | Güncel APK'da **9/9 anonim WebView kontrolü PASS**. Önceki yerel hazırlıkta native kamera/galeri/iptal 3/3; gerçek hesapla native uçtan uca ve fiziksel cihaz testi yapılmadı |
+| Android emülatör / fiziksel cihaz | Önceki 9/9 anonim WebView koşumuna ek olarak gerçek hesapla tek canlı analiz/kayıt, 8 veri/arayüz ve 4 çıkış/koruma kontrolü PASS; native kamera/galeri ve süreç yeniden açılışında oturum doğrulandı. Fiziksel cihaz testi yapılmadı |
 
 STEP 2C backfill sonrasında TypeScript, ESLint, unit, SQL/RLS ve production build yeniden çalıştırıldı. Tek kayda özel aktarım SQL'i işlem öncesinde ayrıca **8/8 izole kontrolü** geçti; bu sayı ana DB test toplamına eklenmez. Gerçek Profilim/Arena ve anonim 401 kontrolleri, önceki mock tarayıcı testlerinden ayrıdır. STEP 2C sırasında bir hedefli mock ayrılma senaryosu çalıştı; bütün 377 mock regresyon ve APK/cihaz testleri o adımda yeniden koşulmadı. Kanıt kapsamı [canlı backfill raporundadır](docs/phase5-step2c-live-backfill.md). Sonraki GitHub senkronizasyonunda yeniden çalıştırılan kontroller ve kapsam sınırları [güncel doğrulama raporunda](docs/github-sync-verification.md) ayrıca belirtilir.
 
@@ -386,10 +402,10 @@ STEP 2C backfill sonrasında TypeScript, ESLint, unit, SQL/RLS ve production bui
 
 ## Mevcut Durum ve Sınırlamalar
 
-- Function **ACTIVE, sürüm 14, verify_jwt=true, ANALYSIS_ACCESS_MODE=authenticated**; analiz **kapalı**. `ACTIVE` durumunun analizin açık olduğu anlamına gelmediğine dikkat edilmelidir.
+- Function **ACTIVE, sürüm 18, verify_jwt=true, ANALYSIS_ACCESS_MODE=authenticated**; analiz **kapalı**. `ACTIVE` durumunun analizin açık olduğu anlamına gelmediğine dikkat edilmelidir.
 - `gemini-3.5-flash-lite` ile tek onaylı gerçek web analizi ve kalıcı kayıt doğrulandı. Bu, genel doğruluk, tüm kategoriler veya kota dayanıklılığı kanıtı değildir.
 - Normal kullanıcı arayüzü test kodu istemez; analiz sunucuda kapalıdır. Pilot erişimi süreli ve ayrı onaya bağlıdır; önceki test kodu veya fotoğraf izni yeni test yetkisi sayılmaz.
-- Emülatörde native kamera/galeri eklentisi sentetik görselle sınandı. Gerçek hesapla native ScanPage, izin reddi, activity geri yükleme ve fiziksel cihaz kabulü açık.
+- Emülatörde gerçek hesapla ScanPage galeri seçimi, onaylı canlı analiz/kayıt, kamera çekimi/önizleme, galeri iptali, oturum geri yükleme ve çıkış doğrulandı. İzin reddi, kamera açıkken Android activity öldürme/geri yükleme ve fiziksel cihaz kabulü açık.
 - Geçmiş listesi/detayı/silme mevcut SDK/RLS üzerinden uygulanmıştır. Gerçek kayıt üzerinde silme veya ikinci kullanıcıya ait veriye erişme testi yapılmaz; silme/izolasyonun otomatik kanıtları canlı testten ayrıdır.
 - Kısa analiz özeti analiz adedini ölçer. XP sistemi farkındalık etkinliğidir; çevresel etki veya fiziksel geri dönüşüm hesabı değildir. Tek analiz için onaylı 200 XP aktarımı ve gerçek profil/Arena okuması doğrulandı; sonraki ayrı onayla EkoGezgin katılımı açıldı. Analiz yanıtına XP/neden eklenmesi ayrı geliştirme gerektirir.
 - Özet ve sıralama açılış/yenileme/sekme dönüşünde okunur; kaydedilmemiş profil formu sekme dönüşünde kaybolmaz. Sürekli Realtime aboneliği yoktur. Büyük veri setlerinde toplama ve sıralama maliyeti ayrıca ölçülmelidir.
@@ -398,10 +414,10 @@ STEP 2C backfill sonrasında TypeScript, ESLint, unit, SQL/RLS ve production bui
 
 ## Sonraki Geliştirme Adımları
 
-1. Canlı backfill ve onaylı EkoGezgin katılım raporunu değerlendirmek. Mevcut kaynakta tek 200 XP kazanımı ve Arena'da sıra #1 var; aynı kayıt tekrar puanlanmaz, katılım izinsiz değiştirilmez.
+1. Fiziksel cihaz/izin reddi/activity geri yükleme kabulünü tamamlamak. Mevcut iki analiz ve iki kazanımla 400 XP/Seviye 3 doğrulandı; Arena katılımı ve kayıtlar izinsiz değiştirilmez.
 2. Ayrı kullanıcı izniyle fiziksel Android cihaz akışını ve gerekiyorsa silinmesine açıkça izin verilen bir kayıtta canlı silmeyi doğrulamak. Mevcut korunan gerçek kayıt silinmez.
-3. Yeni gerçek analiz istenirse fotoğraf/gönderim/kalıcı kayıt ve süreli etkinleştirme için yeniden açık onay almak.
-4. Tamamlanan kapalı normal mod deployment’ı sonrasında, ayrıca izin verilirse gerçek kullanıcı/normal analiz/kota akışını ve operasyonel izlemeyi doğrulamak.
+3. Onaylı tek normal analiz testi tamamlandı; ikinci gerçek analiz için yeni fotoğraf/gönderim/kalıcı kayıt ve etkinleştirme onayı gerekir. Mevcut servis kapalı kalır.
+4. Tamamlanan tek çağrılık normal kullanıcı kabulü sonrasında, ayrıca izin verilirse çok kullanıcılı yük/kota aşımı ve operasyonel izlemeyi doğrulamak.
 5. Güvenli bağımsız yerel geliştirmelere devam etmek; canlı veri/ayar/deployment, secret/erişim değişikliği ve ücretli API işlemleri için açık onay almak.
 
 ## Dokümantasyon ve Resmî Kaynaklar
